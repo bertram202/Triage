@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Поддержка — обращения</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #fff;
+      --line: #e3e6ea;
+      --text: #1b1f24;
+      --dim: #6b7480;
+      --accent: #2f6df6;
+      --warn: #b4540a;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #14171a;
+        --card: #1d2125;
+        --line: #2c3238;
+        --text: #e9ecef;
+        --dim: #97a0aa;
+        --accent: #5b8dff;
+        --warn: #e08a3c;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    header h1 { font-size: 17px; margin: 0; }
+
+    main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      padding: 16px 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .box {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    button {
+      font: inherit;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: .5; cursor: default; }
+
+    .filters { display: flex; gap: 6px; margin-bottom: 10px; }
+    .filters button { padding: 5px 10px; font-size: 13px; }
+    .filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+    .item {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .item:hover { background: var(--bg); }
+    .item[aria-selected="true"] { border-color: var(--accent); background: var(--bg); }
+    .item p { margin: 4px 0 0; font-size: 13px; color: var(--dim); }
+
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--dim); }
+    .tag { border: 1px solid var(--line); border-radius: 20px; padding: 1px 8px; }
+    .tag.hot { color: var(--warn); border-color: var(--warn); }
+
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); margin: 18px 0 8px; }
+    h2:first-child { margin-top: 0; }
+
+    .letter { white-space: pre-wrap; background: var(--bg); border-radius: 8px; padding: 12px; margin: 0; }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      font: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      resize: vertical;
+    }
+
+    .action { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+    .action p { margin: 2px 0 0; font-size: 13px; color: var(--dim); }
+    .issues { color: var(--warn); font-size: 14px; }
+    .issues li { margin-bottom: 4px; }
+
+    .buttons { display: flex; gap: 10px; margin-top: 18px; }
+
+    .live { display: flex; align-items: center; gap: 10px; color: var(--dim); padding: 12px 0; }
+
+    .spin {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+      padding: 18px;
+      width: min(560px, 92vw);
+    }
+
+    dialog::backdrop { background: #0007; }
+    .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .examples button { font-size: 13px; padding: 4px 10px; }
+    .empty { color: var(--dim); }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Поддержка «Демобанка»</h1>
+    <button class="primary" id="new">Новое обращение</button>
+  </header>
+
+  <main>
+    <aside class="box">
+      <div class="filters" id="filters"></div>
+      <div id="queue"></div>
+    </aside>
+    <section class="box" id="card">
+      <p class="empty">Выберите обращение слева или создайте новое.</p>
+    </section>
+  </main>
+
+  <dialog id="dialog">
+    <h2>Новое обращение</h2>
+    <div class="examples" id="examples"></div>
+    <textarea id="text" placeholder="Текст обращения клиента"></textarea>
+    <p class="empty" id="source"></p>
+    <div class="buttons">
+      <button class="primary" id="send">Отправить</button>
+      <button id="cancel">Отмена</button>
+    </div>
+  </dialog>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    // Служебные слова из базы оператор видеть не должен.
+    const CATEGORY = {
+      fraud: "Мошенничество", dispute: "Спорное списание", complaint: "Жалоба",
+      request: "Заявка", question: "Вопрос", spam: "Реклама",
+    };
+    const STATUS = {
+      processing: "в работе", awaiting_review: "ждёт решения", approved: "отправлено",
+      rejected: "отклонено", spam: "реклама",
+    };
+    const FILTERS = [["awaiting_review", "Ждут решения"], ["", "Все"]];
+
+    const EXAMPLES = [
+      { label: "кража карты", client_id: 1, channel: "app",
+        text: "Украли сумку вместе с картой, последние цифры 4821. Срочно заблокируйте!" },
+      { label: "чужое списание", client_id: 2, channel: "app",
+        text: "Списали 12 499 ₽ в пользу APPLE.COM/BILL, у меня нет никаких подписок Apple" },
+      { label: "лишняя комиссия", client_id: 3, channel: "app",
+        text: "Сняли 99 ₽ за обслуживание карты 8812, хотя в прошлом месяце я потратила больше 10 тысяч" },
+      { label: "вопрос", client_id: 4, channel: "app",
+        text: "Если закрыть вклад раньше срока, что будет с процентами?" },
+      { label: "письмо", client_id: null, channel: "email",
+        text: "Здравствуйте! Меня зовут Татьяна Фёдорова. Потеряла карту, заканчивается на 7777, кажется выронила в такси. Заблокируйте, пожалуйста." },
+    ];
+
+    let filter = "awaiting_review";
+    let openId = null;     // какое обращение открыто справа
+    let pending = null;    // что ждёт решения оператора
+    let busy = false;
+    let draft = EXAMPLES[0];
+
+    // --- сеть ---
+
+    async function get(path) {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error((await response.json()).detail || response.statusText);
+      return response.json();
+    }
+
+    /** Читает поток SSE и отдаёт события по одному: они приходят блоками через пустую строку. */
+    async function* events(path, body) {
+      const response = await fetch(path, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error((await response.json()).detail || response.statusText);
+      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) return;
+        buffer += value;
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop();
+        for (const block of blocks) {
+          const data = block.split("\n").find((l) => l.startsWith("data:"));
+          const name = block.split("\n").find((l) => l.startsWith("event:"));
+          if (data) yield { event: name.slice(6).trim(), data: JSON.parse(data.slice(5)) };
+        }
+      }
+    }
+
+    // --- очередь ---
+
+    async function loadQueue() {
+      const data = await get("/tickets" + (filter ? `?status=${filter}` : ""));
+      $("filters").innerHTML = FILTERS.map(([value, label]) =>
+        `<button data-filter="${value}" aria-pressed="${value === filter}">${label}</button>`).join("");
+      $("queue").innerHTML = data.tickets.length
+        ? data.tickets.map((t) => `
+          <div class="item" data-id="${t.id}" aria-selected="${t.id === openId}">
+            <div class="tags">
+              <span class="tag${t.urgency === "critical" ? " hot" : ""}">${CATEGORY[t.category] || "разбираю"}</span>
+              <span>${STATUS[t.status] || t.status}</span>
+            </div>
+            <p>${esc(t.text.slice(0, 90))}</p>
+          </div>`).join("")
+        : `<p class="empty">Пусто.</p>`;
+    }
+
+    // --- карточка ---
+
+    function actionsHtml(actions) {
+      if (!actions.length) return `<p class="empty">Действий не требуется.</p>`;
+      return actions.map((a, i) => `
+        <label class="action">
+          <input type="checkbox" checked data-index="${a.index ?? i}" ${pending ? "" : "disabled"}>
+          <span><b>${esc(a.about || a.name)}</b><p>${esc(a.reason || "")}</p></span>
+        </label>`).join("");
+    }
+
+    async function openTicket(id) {
+      openId = id;
+      const t = await get(`/tickets/${id}`);
+      pending = t.pending;
+      const shown = pending || {
+        reply: t.final_reply || t.draft_reply || "",
+        facts: t.facts.summary, policy_refs: t.facts.policy_refs || [],
+        issues: t.facts.issues || [], actions: t.actions || [],
+      };
+      const done = (t.facts.executed || []).map((a) =>
+        `<li>${esc(a.about || a.name)} — ${a.status === "executed" ? "выполнено" : "не вышло: " + esc(a.result.error)}</li>`);
+
+      $("card").innerHTML = `
+        <h2>Обращение клиента</h2>
+        <p class="letter">${esc(t.text)}</p>
+        <div id="live"></div>
+
+        <h2>Ответ клиенту</h2>
+        ${pending
+          ? `<textarea id="reply">${esc(shown.reply)}</textarea>`
+          : `<p class="letter">${esc(shown.reply) || "—"}</p>`}
+
+        ${shown.facts ? `<h2>Что нашёл агент</h2><p>${esc(shown.facts)}</p>` : ""}
+        ${shown.policy_refs.length ? `<p class="empty">Основание: ${shown.policy_refs.map(esc).join(", ")}</p>` : ""}
+
+        <h2>Действия</h2>
+        ${actionsHtml(shown.actions)}
+        ${shown.issues.length
+          ? `<ul class="issues">${shown.issues.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : ""}
+        ${done.length ? `<h2>Выполнено</h2><ul>${done.join("")}</ul>` : ""}
+
+        ${pending ? `<div class="buttons">
+          <button class="primary" id="approve">Одобрить и отправить</button>
+          <button id="reject">Отклонить</button>
+        </div>` : ""}`;
+
+      await loadQueue();
+    }
+
+    function live(text) {
+      const box = $("live");
+      if (box) box.innerHTML = text ? `<div class="live"><span class="spin"></span>${esc(text)}</div>` : "";
+    }
+
+    /** Показывает шаги агента, пока они идут, и возвращает то, что ждёт решения. */
+    async function follow(path, body) {
+      busy = true;
+      pending = null;
+      let finished = null;
+      try {
+        for await (const { event, data } of events(path, body)) {
+          if (event === "step") live(data.text);
+          if (event === "review") pending = data;
+          if (event === "done") finished = data.ticket_id;
+          if (event === "error") alert(data.text);
+        }
+      } finally {
+        busy = false;
+        live("");
+      }
+      return pending || (finished ? { ticket_id: finished } : null);
+    }
+
+    async function decide(decision) {
+      if (busy) return;
+      const body = { decision, operator: "оператор" };
+      if (decision !== "reject") {
+        const typed = $("reply").value.trim();
+        if (typed !== (pending.reply || "").trim()) body.reply = typed;
+        body.action_indexes = [...document.querySelectorAll("#card input:checked")]
+          .map((el) => Number(el.dataset.index));
+      }
+      const id = openId;
+      live("Выполняю решение");
+      await follow(`/tickets/${id}/review`, body);
+      await openTicket(id);
+    }
+
+    // --- новое обращение ---
+
+    function showDialog() {
+      $("examples").innerHTML = EXAMPLES.map((e, i) =>
+        `<button data-example="${i}">${esc(e.label)}</button>`).join("");
+      $("text").value = draft.text;
+      showSource();
+      $("dialog").showModal();
+    }
+
+    function showSource() {
+      $("source").textContent = draft.channel === "email"
+        ? "Письмо: клиента агент будет искать сам по имени из текста."
+        : `Из приложения: клиент №${draft.client_id} известен сразу.`;
+    }
+
+    async function send() {
+      const text = $("text").value.trim();
+      if (!text) return;
+      $("dialog").close();
+      $("card").innerHTML = `<h2>Обращение клиента</h2><p class="letter">${esc(text)}</p><div id="live"></div>`;
+      live("Отправляю");
+      const result = await follow("/tickets", { text, channel: draft.channel, client_id: draft.client_id });
+      if (result) await openTicket(result.ticket_id);
+      else await loadQueue();
+    }
+
+    // --- события страницы ---
+
+    document.addEventListener("click", async (event) => {
+      const target = event.target.closest("[data-id], [data-filter], [data-example], #new, #send, #cancel, #approve, #reject");
+      if (!target) return;
+      if (target.dataset.id) return openTicket(target.dataset.id);
+      if (target.dataset.filter !== undefined) { filter = target.dataset.filter; return loadQueue(); }
+      if (target.dataset.example !== undefined) { draft = EXAMPLES[target.dataset.example]; $("text").value = draft.text; return showSource(); }
+      if (target.id === "new") return showDialog();
+      if (target.id === "send") return send();
+      if (target.id === "cancel") return $("dialog").close();
+      if (target.id === "approve") return decide("approve");
+      if (target.id === "reject") return decide("reject");
+    });
+
+    loadQueue();
+    setInterval(() => { if (!busy) loadQueue(); }, 5000);
+  </script>
+</body>
+
+</html>

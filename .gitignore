@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.DS_Store
+.claude/
+.idea/
+.vscode/
+data/*
+!data/.gitkeep
+repo-backup.git/

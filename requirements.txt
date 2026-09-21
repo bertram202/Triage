@@ -1,0 +1,13 @@
+# Версии зафиксированы на тех, с которыми проект проверялся (сентябрь 2026).
+langgraph==1.2.11
+langchain==1.4.2
+langchain-openai==1.6.2
+langchain-ollama==1.1.0
+langgraph-checkpoint-sqlite==3.1.1
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic-settings==2.15.0
+aiosqlite==0.22.1
+sqlite-vec==0.1.9
+pytest==9.1.1
+httpx==0.28.1
